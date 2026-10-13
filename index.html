@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="en-GB" data-theme="warm">
+<head>
+<meta name="robots" content="noindex, nofollow">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Just Send It Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600&family=Inter+Tight:wght@700;800&family=Archivo:wght@800;900&family=Space+Grotesk:wght@700&family=Unbounded:wght@700;800&family=Instrument+Sans:wght@700&display=swap" rel="stylesheet">
+<style>
+/* Brand tokens: lime-led, Concept A palette (Figma board 03): #E8FF3F, #151515, #F6F4ED. Ben's pick, 13 Oct 2026 */
+:root {
+  --lime: #E8FF3F;
+  --lime-deep: #B9D600;
+  --lime-ink: #4D5C00;        /* olive for text links: AA on light surfaces */
+  --ink: #151515;
+  --cream: #F6F4ED;
+  --bg: #F6F4ED;
+  --bg-tint: radial-gradient(1200px 600px at 20% -10%, #EEF7C4 0%, rgba(255,227,212,0) 60%), radial-gradient(900px 500px at 100% 0%, #F6F4ED 0%, rgba(255,240,232,0) 60%), #F6F4ED;
+  --card: rgba(255,255,255,0.72);
+  --card-solid: #FFFFFF;
+  --card-border: rgba(21,21,21,0.08);
+  --field: rgba(21,21,21,0.04);
+  --field-hover: rgba(21,21,21,0.07);
+  --text: #151515;
+  --muted: #6E6170;
+  --faint: #9C919D;
+  --primary: #151515;
+  --primary-text: #FFFFFF;
+  --accent: var(--lime);
+  --ok: #1F9D55;
+  --warn: #B26A00;
+  --warn-bg: #FFF4E0;
+  --danger: #C2362B;
+  --danger-bg: #FDECEA;
+  --shadow: 0 1px 2px rgba(21,21,21,0.06), 0 8px 24px rgba(21,21,21,0.06);
+  --radius: 14px;
+  --radius-lg: 20px;
+  --display: "Inter Tight", "Inter", system-ui, sans-serif;
+  --display-w: 800;
+  --display-track: -0.03em;
+  --ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+:root[data-theme="warm"] {
+  --bg-tint: linear-gradient(160deg, #EAFF8A 0%, #F2FBC8 35%, #E3F4EA 70%, #F6F4ED 100%);
+  --card: rgba(255,255,255,0.6);
+  --primary: #151515;
+}
+:root[data-theme="pattern"] {
+  --bg-tint: radial-gradient(circle at 1px 1px, rgba(232,255,63,0.35) 1.2px, transparent 1.4px) 0 0/18px 18px, #F8FAEC;
+}
+:root[data-theme="dark"], :root[data-theme="dark"][data-x] {
+  --bg: #111111;
+  --bg-tint: radial-gradient(1000px 520px at 15% -10%, rgba(232,255,63,0.22) 0%, rgba(232,255,63,0) 60%), #111111;
+  --card: rgba(255,255,255,0.06);
+  --card-solid: #1E1E1E;
+  --card-border: rgba(255,255,255,0.10);
+  --field: rgba(255,255,255,0.06);
+  --field-hover: rgba(255,255,255,0.10);
+  --text: #FBF2EE;
+  --muted: #BBAFBC;
+  --faint: #8D818E;
+  --primary: #E8FF3F;
+  --primary-text: #151515;
+  --lime-ink: #E8FF3F;
+  --warn-bg: rgba(255,180,60,0.12);
+  --danger-bg: rgba(255,90,80,0.12);
+  --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 10px 30px rgba(0,0,0,0.35);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  font-family: var(--ui); color: var(--text); background: var(--bg-tint); background-attachment: fixed;
+  min-height: 100vh; font-size: 15px; line-height: 1.45; -webkit-font-smoothing: antialiased;
+  transition: background .4s ease, color .2s ease;
+}
+button, input, textarea { font: inherit; color: inherit; }
+a { color: inherit; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* Top bar (Luma: minimal, mark left, actions right) */
+.top { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 20px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.mark { display: inline-flex; align-items: baseline; gap: 2px; font-family: var(--display); font-weight: var(--display-w);
+  font-size: 19px; letter-spacing: -0.02em; text-decoration: none; }
+.mark i { display: inline-block; width: 7px; height: 7px; background: var(--text); border-radius: 1.5px; margin-left: 1px; }
+.nav { display: flex; gap: 18px; font-size: 13.5px; color: var(--muted); }
+.nav button { background: none; border: 0; padding: 4px 0; cursor: pointer; color: inherit; display: inline-flex; gap: 6px; align-items: center; }
+.nav button[aria-current="page"] { color: var(--text); font-weight: 500; }
+.right { display: flex; align-items: center; gap: 14px; font-size: 13px; color: var(--muted); }
+.avatar { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, var(--lime), #9EE6C2); display: grid; place-items: center; color: #151515; font-weight: 600; font-size: 11px; }
+
+/* Page column */
+main { max-width: 960px; margin: 0 auto; padding: 24px 16px 120px; }
+.two { display: grid; grid-template-columns: 300px 1fr; gap: 32px; align-items: start; }
+.two > * { min-width: 0; }
+.narrow { max-width: 640px; margin: 0 auto; }
+@media (max-width: 760px) {
+  .two { grid-template-columns: 1fr; gap: 20px; }
+  .nav { display: none; }
+  .hide-sm { display: none; }
+}
+
+/* Cover square */
+.cover { aspect-ratio: 1/1; border-radius: var(--radius-lg); position: relative; overflow: hidden; box-shadow: var(--shadow);
+  background: radial-gradient(120% 90% at 20% 10%, #F4FF9A 0%, #E8FF3F 45%, #C9E400 100%); color: #151515;
+  display: grid; place-items: center; text-align: center; }
+.cover .art { font-family: var(--display); font-weight: var(--display-w); font-size: 44px; line-height: .92; letter-spacing: var(--display-track); padding: 20px; }
+.cover .art span { display: block; white-space: nowrap; }
+.cover .art .sq { display: inline-block; }
+.cover .sq { display: inline-block; width: 18px; height: 18px; background: #151515; border-radius: 3px; margin-left: 4px; vertical-align: baseline; }
+@media (max-width: 760px) { .cover { aspect-ratio: 16/9; } .cover .art { font-size: 34px; } }
+
+/* Drop zone in cover position */
+.drop { border: 2px dashed rgba(21,21,21,0.25); background: var(--card); color: var(--text); cursor: pointer;
+  transition: border-color .15s, transform .15s, background .2s; }
+:root[data-theme="dark"] .drop { border-color: rgba(255,255,255,0.22); }
+.drop:hover, .drop.over { border-color: var(--lime); transform: translateY(-1px); }
+.drop .inner { padding: 22px; }
+.drop .big { font-family: var(--display); font-weight: var(--display-w); font-size: 26px; letter-spacing: -0.02em; margin: 10px 0 4px; }
+.drop .hint { color: var(--muted); font-size: 13px; }
+.drop .plus { width: 52px; height: 52px; border-radius: 14px; margin: 0 auto; display: grid; place-items: center; background: var(--lime); color: #151515; font-size: 28px; font-weight: 600; }
+.drop.has-files { border-style: solid; border-color: var(--card-border); background: var(--card); }
+.stack { display: grid; gap: 8px; text-align: left; padding: 18px; width: 100%; align-self: start; }
+.stack .row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: var(--field); font-size: 13.5px; }
+.stack .row .n { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stack .row .s { color: var(--muted); font-variant-numeric: tabular-nums; }
+.stack .add { color: var(--lime-ink); font-weight: 500; font-size: 13px; text-align: center; padding-top: 4px; }
+.ficon { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; font-size: 10px; font-weight: 600; color: #151515; background: #EEFF9E; flex: none; }
+
+/* Meta under cover */
+.meta { margin-top: 16px; display: grid; gap: 14px; font-size: 13.5px; }
+.label { font-size: 12px; color: var(--muted); letter-spacing: .01em; }
+.person { display: flex; align-items: center; gap: 8px; }
+.link-faint { color: var(--faint); background: none; border: 0; padding: 0; cursor: pointer; font-size: 13px; text-align: left; }
+.link-faint:hover { color: var(--text); }
+
+/* Right column */
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; padding: 3px 9px; border-radius: 999px; background: var(--field); color: var(--muted); }
+.chip.ok { background: rgba(31,157,85,0.12); color: var(--ok); }
+.chip.warn { background: var(--warn-bg); color: var(--warn); }
+.chip.danger { background: var(--danger-bg); color: var(--danger); }
+.chip .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.chip.pulse .dot { animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .3; } }
+h1.title, .title-input { font-family: var(--display); font-weight: var(--display-w); font-size: 40px; line-height: 1.05; letter-spacing: var(--display-track); margin: 10px 0 14px; }
+.title-input { width: 100%; background: transparent; border: 0; outline: none; padding: 0; }
+.title-input::placeholder { color: var(--faint); opacity: .7; }
+@media (max-width: 760px) { h1.title, .title-input { font-size: 32px; } }
+
+/* Grouped fields (Luma: soft tinted rows) */
+.group { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius); overflow: hidden; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); margin-bottom: 10px; }
+.field { display: flex; align-items: center; gap: 10px; padding: 11px 14px; min-height: 46px; }
+.field + .field { border-top: 1px solid var(--card-border); }
+.field .ico { width: 18px; color: var(--muted); flex: none; text-align: center; }
+.field input, .field textarea { flex: 1; background: transparent; border: 0; outline: none; padding: 0; }
+.field textarea { resize: none; min-height: 44px; }
+.field input::placeholder, .field textarea::placeholder { color: var(--faint); }
+.field .val { margin-left: auto; color: var(--muted); display: inline-flex; gap: 6px; align-items: center; }
+.field button.val { background: none; border: 0; cursor: pointer; padding: 4px 0; }
+.field button.val:hover { color: var(--text); }
+.section-label { font-size: 12.5px; color: var(--muted); margin: 18px 2px 8px; }
+.toggle { position: relative; width: 38px; height: 22px; border-radius: 999px; background: rgba(21,21,21,0.18); border: 0; cursor: pointer; flex: none; transition: background .15s; margin-left: auto; }
+:root[data-theme="dark"] .toggle { background: rgba(255,255,255,0.18); }
+.toggle::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .15s; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+.toggle[aria-checked="true"] { background: var(--lime-deep); }
+:root[data-theme="dark"] .toggle[aria-checked="true"] { background: var(--lime); }
+:root[data-theme="dark"] .toggle[aria-checked="true"]::after { background: #151515; }
+.toggle[aria-checked="true"]::after { transform: translateX(16px); }
+.toggle:focus-visible, .btn:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 12px; padding: 12px 18px; font-weight: 600; cursor: pointer; transition: transform .1s, opacity .15s, background .15s; }
+.btn:active { transform: scale(.99); }
+.btn.primary { background: var(--primary); color: var(--primary-text); width: 100%; font-size: 15.5px; padding: 14px 18px; }
+.btn.primary .sq { width: 8px; height: 8px; background: var(--lime); border-radius: 2px; display: inline-block; }
+:root[data-theme="dark"] .btn.primary .sq { background: #151515; }
+.btn.primary[disabled] { opacity: .45; cursor: not-allowed; }
+.btn.ghost { background: var(--field); color: var(--text); }
+.btn.ghost:hover { background: var(--field-hover); }
+.btn.sm { padding: 7px 12px; font-size: 13px; border-radius: 10px; }
+@media (max-width: 760px) {
+  .sticky-cta { position: fixed; left: 0; right: 0; bottom: 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: linear-gradient(to top, var(--bg) 70%, transparent); z-index: 15; }
+}
+
+/* Tile (Luma date tile -> expiry tile) */
+.when { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.tile { width: 44px; border-radius: 10px; border: 1px solid var(--card-border); background: var(--card); overflow: hidden; text-align: center; flex: none; }
+.tile .t { font-size: 9.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 2px 0; border-bottom: 1px solid var(--card-border); }
+.tile .d { font-weight: 600; font-size: 17px; padding: 3px 0 4px; }
+.when .a { font-weight: 600; }
+.when .b { color: var(--muted); font-size: 13px; }
+
+/* Download card */
+.card { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.card .head { display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--muted); padding: 0 2px 10px; }
+.files { display: grid; gap: 6px; margin-bottom: 12px; }
+.file { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; background: var(--field); font-size: 14px; }
+.file .n { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file .s { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.file .dl { background: none; border: 0; cursor: pointer; color: var(--lime-ink); font-weight: 600; font-size: 13px; padding: 4px 6px; border-radius: 8px; }
+.file .dl:hover { background: var(--field-hover); }
+@media (max-width: 520px) { .file { flex-wrap: wrap; row-gap: 4px; } .file .n { flex-basis: calc(100% - 40px); } .file .badge { margin-left: 36px; } .file .s { margin-left: auto; } }
+.badge { font-size: 11px; padding: 2px 7px; border-radius: 999px; background: rgba(31,157,85,0.12); color: var(--ok); white-space: nowrap; }
+.badge.warn { background: var(--warn-bg); color: var(--warn); }
+.notice { display: flex; gap: 10px; padding: 10px 12px; border-radius: 10px; font-size: 13.5px; margin-bottom: 12px; }
+.notice.warn { background: var(--warn-bg); color: var(--warn); }
+.notice.danger { background: var(--danger-bg); color: var(--danger); }
+.state-msg { text-align: center; padding: 22px 8px 14px; }
+.state-msg .big { font-family: var(--display); font-weight: var(--display-w); font-size: 22px; letter-spacing: -0.02em; margin: 8px 0 4px; }
+.state-msg p { color: var(--muted); margin: 0 0 10px; }
+.state-msg .ic { width: 44px; height: 44px; border-radius: 12px; margin: 0 auto; display: grid; place-items: center; font-size: 20px; background: var(--field); }
+.about h3 { font-size: 12.5px; font-weight: 500; color: var(--muted); margin: 22px 2px 8px; }
+.about p { margin: 0 2px; }
+
+/* Sent / manage */
+.crumb { font-size: 13px; color: var(--muted); }
+.mhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.mhead h1 { font-family: var(--display); font-weight: var(--display-w); font-size: 32px; letter-spacing: var(--display-track); margin: 4px 0; }
+.tabs { display: flex; gap: 20px; border-bottom: 1px solid var(--card-border); margin: 10px 0 18px; font-size: 14px; overflow-x: auto; }
+.tabs button { background: none; border: 0; padding: 10px 0; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; }
+.tabs button[aria-selected="true"] { color: var(--text); border-color: var(--text); font-weight: 500; }
+.tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+@media (max-width: 560px) { .tiles { grid-template-columns: 1fr; } }
+.qt { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: var(--radius); background: var(--card); border: 1px solid var(--card-border); cursor: pointer; font-weight: 500; text-align: left; }
+.qt:hover { background: var(--field-hover); }
+.qt .ci { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; font-size: 15px; flex: none; }
+.preview { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 640px) { .preview { grid-template-columns: 1fr; } }
+.mini { border-radius: 12px; background: var(--bg-tint); border: 1px solid var(--card-border); padding: 12px; display: grid; grid-template-columns: 70px 1fr; gap: 10px; font-size: 12px; overflow: hidden; }
+.mini .c { aspect-ratio: 1/1; border-radius: 8px; background: radial-gradient(120% 90% at 20% 10%, #F4FF9A 0%, #E8FF3F 45%, #C9E400 100%); }
+.mini .t { font-family: var(--display); font-weight: var(--display-w); font-size: 15px; line-height: 1.1; }
+.linkbar { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 8px 8px 8px 12px; border-radius: 10px; background: var(--field); font-size: 13.5px; }
+.linkbar code { flex: 1; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kv { display: grid; gap: 12px; font-size: 14px; }
+.kv .k { color: var(--muted); font-size: 12.5px; }
+.progress { height: 6px; border-radius: 999px; background: var(--field); overflow: hidden; }
+.progress i { display: block; height: 100%; background: var(--lime-deep); width: 0; transition: width .2s; }
+
+/* Modal (Luma: small centred card, icon chip) */
+.scrim { position: fixed; inset: 0; background: rgba(17,17,17,0.35); backdrop-filter: blur(3px); display: none; place-items: center; z-index: 50; padding: 16px; }
+.scrim.open { display: grid; }
+.modal { width: 100%; max-width: 340px; background: var(--card-solid); border-radius: 18px; padding: 18px; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+.modal .mi { width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; background: var(--cream); font-size: 18px; margin-bottom: 10px; }
+:root[data-theme="dark"] .mark i { background: var(--lime); }
+:root[data-theme="dark"] .modal .mi { background: rgba(232,255,63,0.18); }
+.modal h2 { font-size: 17px; margin: 0 0 4px; }
+.modal p { color: var(--muted); margin: 0 0 12px; font-size: 13.5px; }
+.modal input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--card-border); background: var(--field); margin-bottom: 12px; outline: none; }
+.modal .err { color: var(--danger); font-size: 13px; margin: -6px 0 10px; display: none; }
+
+/* Theme sheet (Luma bottom sheet) */
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--card-solid); border-top: 1px solid var(--card-border); border-radius: 20px 20px 0 0; padding: 10px 16px 18px; box-shadow: 0 -10px 40px rgba(0,0,0,.12); transform: translateY(105%); transition: transform .25s ease; }
+.sheet.open { transform: none; }
+.sheet .grip { width: 36px; height: 4px; border-radius: 4px; background: var(--card-border); margin: 0 auto 12px; }
+.themes { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.th { background: none; border: 0; cursor: pointer; display: grid; gap: 6px; justify-items: center; font-size: 12px; color: var(--muted); }
+.th .sw { width: 64px; height: 44px; border-radius: 10px; border: 2px solid transparent; box-shadow: var(--shadow); }
+.th[aria-pressed="true"] .sw { border-color: var(--text); }
+.th[aria-pressed="true"] { color: var(--text); font-weight: 500; }
+
+/* Toast (Luma: green pill) */
+.toast { position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 20px); opacity: 0; background: #151515; color: #fff; padding: 9px 16px; border-radius: 999px; font-weight: 500; font-size: 14px; display: inline-flex; gap: 8px; align-items: center; transition: all .25s; z-index: 60; pointer-events: none; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+.toast > span:first-child { color: var(--lime); font-weight: 700; }
+:root[data-theme="dark"] .toast { background: var(--lime); color: #151515; }
+:root[data-theme="dark"] .toast > span:first-child { color: #151515; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+@media (max-width: 760px) { .toast { bottom: 96px; } }
+
+/* Prototype toolbar */
+.proto { position: fixed; right: 12px; bottom: 12px; z-index: 70; background: #151515; color: #F6F4ED; border-radius: 14px; padding: 8px; font-size: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.3); display: grid; gap: 6px; max-width: 260px; }
+.proto .lbl { opacity: .6; padding: 0 4px; }
+.proto .row { display: flex; flex-wrap: wrap; gap: 4px; }
+.proto button { background: rgba(255,255,255,.08); color: inherit; border: 0; border-radius: 8px; padding: 5px 8px; cursor: pointer; font-size: 12px; }
+.proto button[aria-pressed="true"] { background: var(--lime); color: #151515; }
+.proto .min { position: absolute; top: 4px; right: 6px; background: none; padding: 2px 6px; z-index: 1; }
+.proto .lbl:first-of-type { padding-right: 28px; }
+.proto.collapsed .lbl:first-of-type { cursor: pointer; }
+.proto .body { display: grid; gap: 6px; }
+.proto.collapsed .body { display: none; }
+@media (max-width: 760px) { .proto { top: 58px; bottom: auto; } }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a class="mark" href="#" data-go="upload" aria-label="Just Send It home">just send it<i aria-hidden="true"></i></a>
+  <nav class="nav" aria-label="Main">
+    <button data-go="upload" aria-current="page">↑ Send</button>
+    <button data-go="dashboard">▤ Transfers</button>
+    <button data-go="inbox">✉ Inbox</button>
+  </nav>
+  <div class="right"><span class="hide-sm" id="clock"></span><button class="btn ghost sm" data-go="upload">New transfer</button><span class="avatar" aria-label="Ben">B</span></div>
+</header>
+
+<main>
+<!-- 1. UPLOAD (Luma "Create Event": the page is the form) -->
+<section id="v-upload" class="two" aria-labelledby="upload-title">
+  <div>
+    <label class="cover drop" id="drop" tabindex="0" aria-label="Choose files to send">
+      <input type="file" id="file" multiple class="sr">
+      <div class="inner" id="drop-empty">
+        <div class="plus" aria-hidden="true">+</div>
+        <div class="big">Choose files</div>
+        <div class="hint">or drop them here. Up to 5 GB free, no account needed.</div>
+      </div>
+      <div class="stack" id="drop-list" hidden></div>
+    </label>
+    <div class="meta">
+      <button class="group field" style="width:100%;border-radius:var(--radius);cursor:pointer;text-align:left" id="open-theme" aria-label="Change page theme">
+        <span class="sw" id="theme-sw" style="width:34px;height:24px;border-radius:6px;background:radial-gradient(120% 90% at 20% 10%,#F4FF9A,#E8FF3F 45%,#C9E400)"></span>
+        <span><span class="label">Download page theme</span><br><strong id="theme-name">Minimal</strong></span>
+        <span class="val">✎</span>
+      </button>
+    </div>
+  </div>
+  <div>
+    <span class="chip">◎ Anyone with the link</span>
+    <h1 class="sr" id="upload-title">Send files</h1>
+    <input class="title-input" id="t-title" placeholder="Add a title" aria-label="Transfer title" autocomplete="off">
+    <div class="group">
+      <div class="field"><span class="ico" aria-hidden="true">@</span><input id="t-to" placeholder="Recipients (optional)" aria-label="Recipient emails"></div>
+      <div class="field"><span class="ico" aria-hidden="true">✉</span><input id="t-from" placeholder="Your email (optional)" aria-label="Your email"></div>
+    </div>
+    <div class="group">
+      <div class="field"><span class="ico" aria-hidden="true">¶</span><textarea id="t-msg" placeholder="Add a message" aria-label="Message"></textarea></div>
+    </div>
+    <div class="section-label">Transfer options</div>
+    <div class="group">
+      <div class="field"><span class="ico" aria-hidden="true">◷</span>Expires<button class="val" id="opt-exp" aria-label="Change expiry">7 days ✎</button></div>
+      <div class="field"><span class="ico" aria-hidden="true">⚿</span>Password<button class="toggle" role="switch" aria-checked="false" id="opt-pw" aria-label="Password protect"></button></div>
+      <div class="field" id="pw-row" hidden><span class="ico" aria-hidden="true"></span><input id="t-pw" type="text" placeholder="Choose a password (8+ characters)" aria-label="Password"></div>
+      <div class="field"><span class="ico" aria-hidden="true">✦</span>Delete after download<button class="toggle" role="switch" aria-checked="false" id="opt-burn" aria-label="Delete after download"></button></div>
+      <div class="field"><span class="ico" aria-hidden="true">↓</span>Max downloads<button class="val" id="opt-max" aria-label="Change max downloads">Unlimited ✎</button></div>
+    </div>
+    <div class="sticky-cta" style="margin-top:16px">
+      <button class="btn primary" id="send" disabled>Just send it <span class="sq" aria-hidden="true"></span></button>
+    </div>
+    <p class="label" style="margin-top:10px;text-align:center">Files are scanned for malware and stored in the EU. <a href="#" class="link-faint" style="text-decoration:underline">How we handle your files</a></p>
+  </div>
+</section>
+
+<!-- 2. SENDING / SENT (Luma "Manage event" overview) -->
+<section id="v-sent" hidden aria-labelledby="sent-title">
+  <div class="narrow">
+    <div class="crumb">Transfers ›</div>
+    <div class="mhead">
+      <h1 id="sent-title">Brand assets for Q4</h1>
+      <button class="btn ghost sm" data-go="download">Download page ↗</button>
+    </div>
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="true">Overview</button>
+      <button role="tab" aria-selected="false">Recipients</button>
+      <button role="tab" aria-selected="false">Activity</button>
+      <button role="tab" aria-selected="false">Settings</button>
+    </div>
+    <div id="sending" class="card" style="margin-bottom:14px">
+      <div class="head"><span id="send-label">Uploading 3 files</span><span id="send-pct">0%</span></div>
+      <div class="progress" aria-hidden="true"><i id="send-bar"></i></div>
+      <p class="label" style="margin:10px 2px 0" id="send-detail">Keep this tab open until it finishes. If your connection drops, it picks up where it stopped.</p>
+    </div>
+    <div id="sent-ok" hidden>
+      <div class="tiles">
+        <button class="qt" id="copy2"><span class="ci" style="background:#EEF7C4">⧉</span>Copy link</button>
+        <button class="qt"><span class="ci" style="background:#E7E3FB">✉</span>Email it</button>
+        <button class="qt"><span class="ci" style="background:#DDF3E6">↗</span>Share</button>
+      </div>
+      <div class="card">
+        <div class="preview">
+          <div>
+            <div class="mini"><div class="c"></div><div><span class="chip ok" style="font-size:10px;padding:1px 6px" id="mini-chip"><span class="dot"></span>Ready</span><div class="t" style="margin-top:6px" id="mini-title">Brand assets for Q4</div><div style="color:var(--muted)">3 files · 1.4 GB</div></div></div>
+            <div class="linkbar"><code id="link">justsend-it.com/d/eK3v9QpZ2mLx8RtN4bWc1a</code><button class="btn ghost sm" id="copy">Copy</button></div>
+          </div>
+          <div class="kv">
+            <div><div class="k">Status</div><div id="sent-status"><span class="chip warn pulse"><span class="dot"></span>Checking files</span></div></div>
+            <div><div class="k">Expires</div><div>Mon 20 Oct, 12:15</div></div>
+            <div><div class="k">Downloads</div><div>0</div></div>
+            <div><div class="k">Protection</div><div id="sent-prot">Link only</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. DOWNLOAD PAGE (Luma event page) -->
+<section id="v-download" hidden class="two" aria-labelledby="dl-title">
+  <div>
+    <div class="cover"><div class="art" aria-hidden="true"><span>Files</span><span>to send.</span><span>Things</span><span>to do<span class="sq"></span></span></div></div>
+    <div class="meta">
+      <div><div class="label">Sent by</div><div class="person"><span class="avatar">B</span>Ben Cairney</div></div>
+      <div><div class="label">Sent to</div><div style="color:var(--muted)">studio@example.com</div></div>
+      <button class="link-faint" data-modal="report">Report this transfer</button>
+    </div>
+  </div>
+  <div>
+    <span id="dl-chip" class="chip ok"><span class="dot"></span>Ready</span>
+    <h1 class="title" id="dl-title">Brand assets for Q4</h1>
+    <div class="when">
+      <div class="tile" aria-hidden="true"><div class="t">Oct</div><div class="d">20</div></div>
+      <div><div class="a" id="dl-exp-a">Expires in 6 days</div><div class="b">Mon 20 Oct, 12:15</div></div>
+    </div>
+    <div class="card" id="dl-card"></div>
+    <div class="about">
+      <h3>Message</h3>
+      <p>Hi both, here are the final files for the launch. The video is the cut we agreed on Friday. Shout if anything is missing.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 4. DASHBOARD (Luma timeline list) -->
+<section id="v-dashboard" hidden aria-labelledby="dash-title">
+  <div class="narrow">
+    <div class="mhead"><h1 id="dash-title">Transfers</h1><button class="btn ghost sm" data-go="upload">+ New transfer</button></div>
+    <div class="tabs" role="tablist"><button role="tab" aria-selected="true">Sent</button><button role="tab" aria-selected="false">Received</button></div>
+    <div id="timeline"></div>
+  </div>
+</section>
+
+<!-- 5. INBOX (/:handle, event-page layout) -->
+<section id="v-inbox" hidden class="two" aria-labelledby="inbox-title">
+  <div>
+    <div class="cover"><div class="art" aria-hidden="true"><span>Send</span><span>it to</span><span>Ben<span class="sq"></span></span></div></div>
+    <div class="meta"><div class="label">justsend-it.com/ben</div></div>
+  </div>
+  <div>
+    <span class="chip">✉ Personal inbox</span>
+    <h1 class="title" id="inbox-title">Send files to Ben</h1>
+    <div class="group"><div class="field"><span class="ico">@</span><input placeholder="Your name"></div><div class="field"><span class="ico">✉</span><input placeholder="Your email"></div></div>
+    <button class="btn primary" data-go="upload" style="margin-top:6px">Choose files</button>
+  </div>
+</section>
+</main>
+
+<!-- Modals -->
+<div class="scrim" id="m-password" role="dialog" aria-modal="true" aria-labelledby="mp-t">
+  <div class="modal">
+    <div class="mi">⚿</div>
+    <h2 id="mp-t">This transfer has a password</h2>
+    <p>Ask the sender if you don't have it.</p>
+    <input id="mp-in" type="password" placeholder="Password" aria-label="Password">
+    <div class="err" id="mp-err">That password didn't work. 4 tries left.</div>
+    <button class="btn primary" id="mp-go">Unlock</button>
+  </div>
+</div>
+<div class="scrim" id="m-report" role="dialog" aria-modal="true" aria-labelledby="mr-t">
+  <div class="modal">
+    <div class="mi" style="background:var(--danger-bg)">⚑</div>
+    <h2 id="mr-t">Report this transfer</h2>
+    <p>Tell us what's wrong. We review every report.</p>
+    <input placeholder="What's the problem?" aria-label="Reason">
+    <button class="btn primary" style="background:var(--danger);color:#fff" data-close>Send report</button>
+  </div>
+</div>
+<div class="scrim" id="m-burn" role="dialog" aria-modal="true" aria-labelledby="mb-t">
+  <div class="modal">
+    <div class="mi">✦</div>
+    <h2 id="mb-t">These files disappear after download</h2>
+    <p>Once you've downloaded everything, the link stops working for good. Save them somewhere safe.</p>
+    <button class="btn primary" id="mb-go">Download all</button>
+  </div>
+</div>
+
+<!-- Theme sheet -->
+<div class="sheet" id="sheet" aria-label="Download page theme">
+  <div class="grip"></div>
+  <div class="themes">
+    <button class="th" data-theme="" aria-pressed="true"><span class="sw" style="background:#F6F4ED;background:radial-gradient(80% 80% at 20% 0%,#EEF7C4,#F6F4ED)"></span>Minimal</button>
+    <button class="th" data-theme="warm" aria-pressed="false"><span class="sw" style="background:linear-gradient(160deg,#EAFF8A,#E3F4EA)"></span>Fresh</button>
+    <button class="th" data-theme="pattern" aria-pressed="false"><span class="sw" style="background:radial-gradient(circle at 1px 1px,rgba(232,255,63,.6) 1.2px,transparent 1.4px) 0 0/8px 8px,#F8FAEC"></span>Pattern</button>
+    <button class="th" data-theme="dark" aria-pressed="false"><span class="sw" style="background:radial-gradient(80% 80% at 20% 0%,rgba(232,255,63,.5),#111111)"></span>After dark</button>
+  </div>
+  <p class="label" style="text-align:center;margin:12px 0 0">Custom colours, fonts and your logo come with Pro.</p>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><span>✓</span><span id="toast-t"></span></div>
+
+<!-- Prototype controls (not part of the product) -->
+<div class="proto" id="proto" aria-label="Prototype controls">
+  <button class="min" id="proto-min" aria-label="Collapse prototype controls">–</button>
+  <div class="lbl">Prototype controls</div>
+  <div class="body">
+    <div class="row" id="proto-screens">
+      <button data-go="upload">Send</button><button data-go="sent">Sent</button><button data-go="download">Download</button><button data-go="dashboard">Transfers</button><button data-go="inbox">Inbox</button>
+    </div>
+    <div class="lbl">Download page state</div>
+    <div class="row" id="proto-states">
+      <button data-state="ready" aria-pressed="true">Ready</button><button data-state="checking">Checking</button><button data-state="password">Password</button><button data-state="unscanned">Not scanned</button><button data-state="burn">Burn</button><button data-state="expired">Expired</button><button data-state="blocked">Blocked</button>
+    </div>
+    <div class="lbl">Display typeface</div>
+    <div class="row" id="proto-fonts">
+      <button data-font="Bricolage Grotesque" data-w="800">Bricolage</button><button data-font="Inter Tight" data-w="800" aria-pressed="true">Inter Tight</button><button data-font="Archivo" data-w="900">Archivo</button><button data-font="Space Grotesk" data-w="700">Space Grotesk</button><button data-font="Unbounded" data-w="700">Unbounded</button><button data-font="Instrument Sans" data-w="700">Instrument</button>
+    </div>
+    <div class="lbl">Theme</div>
+    <div class="row" id="proto-themes">
+      <button data-theme="" aria-pressed="true">Minimal</button><button data-theme="warm">Fresh</button><button data-theme="pattern">Pattern</button><button data-theme="dark">Dark</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const fmt = (b) => { const u = ["B","KB","MB","GB"]; let i = 0; while (b >= 1000 && i < 3) { b /= 1000; i++; } return `${b.toFixed(b < 10 && i ? 1 : 0)} ${u[i]}`; };
+  const ext = (n) => (n.split(".").pop() || "").slice(0, 4).toUpperCase();
+  const state = { files: [], dl: "ready", theme: "", expiry: 7, max: null };
+
+  // Clock (Luma shows local time in the bar)
+  const tick = () => { $("#clock").textContent = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", timeZoneName: "short" }).format(new Date()); };
+  tick(); setInterval(tick, 30000);
+
+  // Navigation
+  const views = ["upload", "sent", "download", "dashboard", "inbox"];
+  function go(v) {
+    views.forEach((x) => { $(`#v-${x}`).hidden = x !== v; });
+    $$(".nav button").forEach((b) => b.setAttribute("aria-current", b.dataset.go === v ? "page" : "false"));
+    $$("#proto-screens button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.go === v)));
+    window.scrollTo({ top: 0 });
+    if (v === "download") renderDl();
+  }
+  document.addEventListener("click", (e) => { const t = e.target.closest("[data-go]"); if (t) { e.preventDefault(); go(t.dataset.go); } });
+
+  // Toast
+  let tt;
+  function toast(msg) { $("#toast-t").textContent = msg; $("#toast").classList.add("show"); clearTimeout(tt); tt = setTimeout(() => $("#toast").classList.remove("show"), 2600); }
+
+  // Files
+  const drop = $("#drop"), input = $("#file");
+  function setFiles(list) {
+    state.files = state.files.concat(list.map((f) => ({ name: f.name, size: f.size })));
+    renderFiles();
+  }
+  function renderFiles() {
+    const has = state.files.length > 0;
+    $("#drop-empty").hidden = has; $("#drop-list").hidden = !has; drop.classList.toggle("has-files", has);
+    const total = state.files.reduce((a, f) => a + f.size, 0);
+    $("#drop-list").innerHTML = state.files.map((f) => `<div class="row"><span class="ficon">${ext(f.name) || "FILE"}</span><span class="n">${escapeHtml(f.name)}</span><span class="s">${fmt(f.size)}</span></div>`).join("") +
+      `<div class="label" style="padding:2px 4px">${state.files.length} ${state.files.length === 1 ? "file" : "files"} · ${fmt(total)} of 5 GB</div><div class="add">+ Add more</div>`;
+    $("#send").disabled = !has;
+  }
+  const escapeHtml = (s) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  input.addEventListener("change", () => { setFiles([...input.files]); input.value = ""; });
+  ["dragenter", "dragover"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", (e) => setFiles([...e.dataTransfer.files]));
+  drop.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); input.click(); } });
+
+  // Options
+  const toggle = (el, on) => { el.setAttribute("aria-checked", String(on)); };
+  $("#opt-pw").addEventListener("click", (e) => { const on = e.currentTarget.getAttribute("aria-checked") !== "true"; toggle(e.currentTarget, on); $("#pw-row").hidden = !on; if (on) $("#t-pw").focus(); });
+  $("#opt-burn").addEventListener("click", (e) => { toggle(e.currentTarget, e.currentTarget.getAttribute("aria-checked") !== "true"); });
+  $("#opt-exp").addEventListener("click", (e) => { state.expiry = state.expiry === 7 ? 1 : 7; e.currentTarget.textContent = `${state.expiry} ${state.expiry === 1 ? "day" : "days"} ✎`; });
+  $("#opt-max").addEventListener("click", (e) => { const seq = [null, 1, 3, 10]; state.max = seq[(seq.indexOf(state.max) + 1) % seq.length]; e.currentTarget.textContent = `${state.max ?? "Unlimited"} ✎`; });
+
+  // Send flow: truthful states (Figma voice board)
+  $("#send").addEventListener("click", () => {
+    const title = $("#t-title").value.trim() || (state.files.length === 1 ? state.files[0].name : `${state.files.length} files`);
+    $("#sent-title").textContent = title; $("#mini-title").textContent = title; $("#dl-title").textContent = title;
+    $("#sent-prot").textContent = [$("#opt-pw").getAttribute("aria-checked") === "true" ? "Password" : null, $("#opt-burn").getAttribute("aria-checked") === "true" ? "Deletes after download" : null].filter(Boolean).join(" · ") || "Link only";
+    go("sent");
+    $("#sending").hidden = false; $("#sent-ok").hidden = true;
+    $("#send-label").textContent = `Uploading ${state.files.length} ${state.files.length === 1 ? "file" : "files"}`;
+    let p = 0;
+    const timer = setInterval(() => {
+      p = Math.min(100, p + 7 + Math.random() * 9);
+      $("#send-bar").style.width = `${p}%`; $("#send-pct").textContent = `${Math.round(p)}%`;
+      if (p >= 100) {
+        clearInterval(timer);
+        $("#sending").hidden = true; $("#sent-ok").hidden = false;
+        $("#sent-status").innerHTML = '<span class="chip warn pulse"><span class="dot"></span>Checking files</span>';
+        $("#mini-chip").className = "chip warn"; $("#mini-chip").innerHTML = '<span class="dot"></span>Checking';
+        toast("Link ready. Pass it on.");
+        setTimeout(() => {
+          $("#sent-status").innerHTML = '<span class="chip ok"><span class="dot"></span>Ready to download</span>';
+          $("#mini-chip").className = "chip ok"; $("#mini-chip").innerHTML = '<span class="dot"></span>Ready';
+          toast("Sent. Nicely done.");
+        }, 2600);
+      }
+    }, 140);
+  });
+  const copy = () => { navigator.clipboard?.writeText(`https://${$("#link").textContent}`).catch(() => {}); toast("Link copied."); };
+  $("#copy").addEventListener("click", copy); $("#copy2").addEventListener("click", copy);
+
+  // Download page states
+  const demo = [ { name: "Launch film - final cut.mp4", size: 1280000000, scan: "clean" }, { name: "Logo pack.zip", size: 84200000, scan: "clean" }, { name: "Brand guidelines.pdf", size: 12600000, scan: "clean" } ];
+  function filesHtml(unscanned) {
+    return `<div class="files">${demo.map((f, i) => `<div class="file"><span class="ficon">${ext(f.name)}</span><span class="n">${escapeHtml(f.name)}</span>${unscanned && i === 0 ? '<span class="badge warn">Not scanned</span>' : '<span class="badge">Scanned</span>'}<span class="s">${fmt(f.size)}</span><button class="dl" aria-label="Download ${escapeHtml(f.name)}">Download</button></div>`).join("")}</div>`;
+  }
+  function renderDl() {
+    const c = $("#dl-card"), chip = $("#dl-chip"), total = fmt(demo.reduce((a, f) => a + f.size, 0));
+    const head = `<div class="head"><span>${demo.length} files · ${total}</span><span>Zip download ${total}</span></div>`;
+    const set = (cls, text, pulse) => { chip.className = `chip ${cls}${pulse ? " pulse" : ""}`; chip.innerHTML = `<span class="dot"></span>${text}`; };
+    $("#dl-exp-a").textContent = "Expires in 6 days";
+    switch (state.dl) {
+      case "ready": set("ok", "Ready"); c.innerHTML = head + filesHtml(false) + `<button class="btn primary">Download all <span class="sq"></span></button>`; break;
+      case "unscanned": set("warn", "Some files not scanned"); c.innerHTML = head + `<div class="notice warn"><span>⚠</span><span>One file is too large for us to scan. Only open it if you trust the sender.</span></div>` + filesHtml(true) + `<button class="btn primary">Download all <span class="sq"></span></button>`; break;
+      case "checking": set("warn", "Checking files", true); c.innerHTML = `<div class="state-msg"><div class="ic">⌛</div><div class="big">Checking files</div><p>We scan everything before it can be downloaded. This usually takes under a minute.</p><div class="progress" style="max-width:240px;margin:0 auto"><i style="width:55%"></i></div></div>`; break;
+      case "password": set("", "Password protected"); c.innerHTML = `<div class="state-msg"><div class="ic">⚿</div><div class="big">This transfer has a password</div><p>Ask the sender if you don't have it.</p><button class="btn primary" style="max-width:260px" data-modal="password">Enter password</button></div>`; break;
+      case "burn": set("warn", "Deletes after download"); c.innerHTML = head + `<div class="notice warn"><span>✦</span><span>These files disappear once they've been downloaded.</span></div>` + filesHtml(false) + `<button class="btn primary" data-modal="burn">Download all <span class="sq"></span></button>`; break;
+      case "expired": set("", "Expired"); $("#dl-exp-a").textContent = "Expired"; c.innerHTML = `<div class="state-msg"><div class="ic">◷</div><div class="big">This link has expired.</div><p>Ask the sender for a new one.</p></div>`; break;
+      case "blocked": set("danger", "Blocked"); c.innerHTML = `<div class="state-msg"><div class="ic" style="background:var(--danger-bg)">⛔</div><div class="big">These files can't be downloaded</div><p>Our scan found something harmful, so we've blocked this transfer to keep you safe.</p></div>`; break;
+    }
+  }
+  $("#proto-states").addEventListener("click", (e) => { const b = e.target.closest("[data-state]"); if (!b) return; state.dl = b.dataset.state; $$("#proto-states button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); go("download"); });
+
+  // Modals
+  function openModal(id) { const m = $(`#m-${id}`); m.classList.add("open"); m.querySelector("input,button")?.focus(); }
+  function closeModals() { $$(".scrim").forEach((m) => m.classList.remove("open")); }
+  document.addEventListener("click", (e) => {
+    const t = e.target.closest("[data-modal]"); if (t) { openModal(t.dataset.modal); return; }
+    if (e.target.classList.contains("scrim") || e.target.closest("[data-close]")) { closeModals(); if (e.target.closest("[data-close]")) toast("Thanks. We'll take a look."); }
+  });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeModals(); $("#sheet").classList.remove("open"); } });
+  $("#mp-go").addEventListener("click", () => { if ($("#mp-in").value.trim().toLowerCase() === "sendit") { closeModals(); state.dl = "ready"; renderDl(); toast("Unlocked."); } else { $("#mp-err").style.display = "block"; } });
+  $("#mb-go").addEventListener("click", () => { closeModals(); toast("Downloading. This link now stops working."); setTimeout(() => { state.dl = "expired"; renderDl(); }, 1800); });
+
+  // Themes (Luma per-page themes -> branded download pages)
+  function setTheme(t) {
+    state.theme = t; if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
+    $$("[data-theme]").forEach((b) => { if (b.closest(".themes, #proto-themes")) b.setAttribute("aria-pressed", String(b.dataset.theme === t)); });
+    $("#theme-name").textContent = { "": "Minimal", warm: "Fresh", pattern: "Pattern", dark: "After dark" }[t];
+  }
+  $("#open-theme").addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); $("#sheet").classList.toggle("open"); });
+  document.addEventListener("click", (e) => { const b = e.target.closest(".themes [data-theme], #proto-themes [data-theme]"); if (b) setTheme(b.dataset.theme); else if (!e.target.closest("#sheet, #open-theme")) $("#sheet").classList.remove("open"); });
+
+  // Dashboard timeline
+  const rows = [
+    { day: "Today", d: "Monday", items: [ ["Brand assets for Q4", "3 files · 1.4 GB", "ok", "Ready", "Expires in 6 days"], ["Site photos – Gorey", "42 files · 3.1 GB", "warn", "Checking files", "Expires in 7 days"] ] },
+    { day: "Fri 10 Oct", d: "", items: [ ["Contract v3 (signed)", "1 file · 2.2 MB", "", "Downloaded, deleted", "Burned after download"], ["Podcast stems", "8 files · 900 MB", "ok", "Ready", "Expires in 3 days"] ] },
+    { day: "Mon 6 Oct", d: "", items: [ ["Old invoices", "12 files · 8 MB", "", "Expired", "Files deleted"] ] },
+  ];
+  $("#timeline").innerHTML = rows.map((g) => `<div style="display:flex;gap:10px;align-items:baseline;margin:18px 2px 8px"><span style="width:7px;height:7px;border-radius:50%;background:var(--faint);display:inline-block"></span><strong>${g.day}</strong><span class="label">${g.d}</span></div>` +
+    g.items.map((r) => `<button class="card" data-go="sent" style="display:flex;gap:12px;align-items:center;width:100%;text-align:left;margin:0 0 8px 17px;cursor:pointer;color:inherit;max-width:calc(100% - 17px)"><div style="flex:1;min-width:0"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r[0]}</div><div class="label">${r[1]} · ${r[4]}</div><div style="margin-top:6px"><span class="chip ${r[2]}"><span class="dot"></span>${r[3]}</span></div></div><div class="mini" style="width:64px;height:64px;padding:0;display:block;border:0"><div class="c" style="width:64px;height:64px;border-radius:12px"></div></div></button>`).join("")).join("");
+
+  // Display typeface trial
+  const tracking = { "Bricolage Grotesque": "-0.025em", "Inter Tight": "-0.03em", "Archivo": "-0.02em", "Space Grotesk": "-0.03em", "Unbounded": "-0.04em", "Instrument Sans": "-0.025em" };
+  $("#proto-fonts").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-font]"); if (!b) return;
+    const r = document.documentElement.style;
+    r.setProperty("--display", `"${b.dataset.font}", "Inter", system-ui, sans-serif`);
+    r.setProperty("--display-w", b.dataset.w);
+    r.setProperty("--display-track", tracking[b.dataset.font]);
+    $$("#proto-fonts button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    toast(`Typeface: ${b.dataset.font}`);
+  });
+  // Prototype toolbar
+  const protoToggle = () => { const c = $("#proto").classList.toggle("collapsed"); $("#proto-min").textContent = c ? "+" : "–"; };
+  $("#proto-min").addEventListener("click", protoToggle);
+  $("#proto .lbl").addEventListener("click", () => { if ($("#proto").classList.contains("collapsed")) protoToggle(); });
+  $$("#proto-themes button").forEach((b) => b.addEventListener("click", () => setTheme(b.dataset.theme)));
+
+  $("#proto").classList.add("collapsed"); $("#proto-min").textContent = "+";
+  setTheme("warm"); // Fresh is the default background
+  go("upload");
+})();
+</script>
+</body>
+</html>
